@@ -10,9 +10,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Strata">
 <title>Strata Studio</title>
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Heebo:wght@400;500;700&display=swap" rel="stylesheet">
@@ -1147,7 +1147,7 @@ async function fetchProg(url, onp){
 const decode = ab => new Promise((res, rej) => { const p = E.ctx.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); });
 async function boot(){
   step('engine', 'run'); E.init(); step('engine', 'ok'); prog(0.05);
-  const urls = ['/audio/session.mp3', '/audio/session.m4a'];
+  const urls = ['session.mp3', 'session.m4a'];
   let buf = null;
   for (const u of urls){
     try {
@@ -1168,7 +1168,7 @@ function enter(){
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
   E.ctx.resume(); E.play(); $('#boot').classList.add('gone');
   if ('mediaSession' in navigator){
-    navigator.mediaSession.metadata = new MediaMetadata({ title: 'Session 01', artist: 'Strata Session', album: 'Strata Studio', artwork: [{ src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' }] });
+    navigator.mediaSession.metadata = new MediaMetadata({ title: 'Session 01', artist: 'Strata Session', album: 'Strata Studio', artwork: [{ src: 'icon-512.png', sizes: '512x512', type: 'image/png' }] });
     navigator.mediaSession.setActionHandler('play', () => E.play()); navigator.mediaSession.setActionHandler('pause', () => E.pause());
     try { navigator.mediaSession.setActionHandler('seekto', d => E.seek(d.seekTime)); } catch (e) {}
   }
@@ -1188,7 +1188,7 @@ fitAll(); new ResizeObserver(() => fitAll()).observe(document.body);
 document.fonts && document.fonts.ready.then(fitAll);
 requestAnimationFrame(frame);
 boot();
-if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 </script>
 </body>
 </html>
