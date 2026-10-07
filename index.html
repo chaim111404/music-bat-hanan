@@ -205,6 +205,9 @@ svg.i.fill{fill:currentColor;stroke:none}
   background:linear-gradient(90deg,#4a5563,#2b333d 48%,#1e242b 52%,#38424e);border:1px solid #0b0e12;box-shadow:0 2px 4px #0008}
 .hf .cap::after{content:"";position:absolute;top:3px;bottom:3px;left:50%;width:2px;margin-left:-1px;background:#eef3f8}
 .pitch .vf{height:100%;min-height:130px}
+.rng{height:22px;min-width:44px;padding:0 4px;border-radius:var(--r1);background:var(--raised);border:1px solid var(--line);font-family:var(--cond);font-weight:700;font-size:12px;color:var(--dim)}
+.rng.on{color:var(--amber);border-color:#6b4510;background:#2a2116}
+.deck.b .rng.on{color:var(--cyan);border-color:#1f5f7c;background:#123445}
 
 /* fx */
 .fx{padding:0 0 8px;display:flex;flex-direction:column}
@@ -432,7 +435,7 @@ tr.trk.b td{color:#8fe3fb}
       <div class="dprog" id="aProgWrap"><canvas id="aProg"></canvas></div>
       <div class="dmid">
         <div class="jogwrap"><svg class="jog" id="jogA" viewBox="0 0 200 200"></svg></div>
-        <div class="pitch"><span class="lbl">Tempo</span><div class="vf" data-ctl="tempoA" data-def="0.5" data-kind="vfader" data-color="#ff9f1c"></div><span class="num" id="aPitch" style="font-size:12px;color:var(--dim)">0.0%</span></div>
+        <div class="pitch"><span class="lbl">Tempo</span><div class="vf" data-ctl="tempoA" data-def="0.5" data-kind="vfader" data-color="#ff9f1c"></div><span class="num" id="aPitch" style="font-size:12px;color:var(--dim)">0.0%</span><button class="rng" data-rng="A" aria-label="טווח טמפו">±8%</button></div>
       </div>
       <div class="dctrl" id="cuesA"></div>
       <div class="dbtm">
@@ -485,7 +488,7 @@ tr.trk.b td{color:#8fe3fb}
       <div class="dprog"><canvas id="bProg"></canvas></div>
       <div class="dmid">
         <div class="jogwrap"><svg class="jog" id="jogB" viewBox="0 0 200 200"></svg></div>
-        <div class="pitch"><span class="lbl">Tempo</span><div class="vf" data-ctl="tempoB" data-def="0.5" data-kind="vfader" data-color="#3fd0ff"></div><span class="num" id="bPitch" style="font-size:12px;color:var(--dim)">0.0%</span></div>
+        <div class="pitch"><span class="lbl">Tempo</span><div class="vf" data-ctl="tempoB" data-def="0.5" data-kind="vfader" data-color="#3fd0ff"></div><span class="num" id="bPitch" style="font-size:12px;color:var(--dim)">0.0%</span><button class="rng" data-rng="B" aria-label="טווח טמפו">±8%</button></div>
       </div>
       <div class="dctrl" id="cuesB"></div>
       <div class="dbtm">
@@ -672,7 +675,8 @@ function applyEq(band){
   node.gain.setTargetAtTime(KILL[band] ? -40 : eqDb(v), E.ctx.currentTime, 0.012);
 }
 function echoTime(){ if (!E.n) return; const i = Math.round(CTL.echoTime.v * 5); $('#echoSync').textContent = ECHO_L[i]; E.n.eDel.delayTime.setTargetAtTime(ECHO_F[i] * 60 / BASE_BPM / E.rate, E.ctx.currentTime, 0.05); }
-function pitchHTML(v){ const p = (v - 0.5) * 16; if (Math.abs(p) < 0.05) return '0.0%'; return `<svg class="i" style="width:10px;height:10px;vertical-align:-1px;margin-right:2px"><use href="#i-${p > 0 ? 'up' : 'down'}"/></svg>${Math.abs(p).toFixed(1)}%`; }
+const RNG = [0.08, 0.16, 0.5], RS = { A: 0, B: 0 };
+function pitchHTML(v, r){ const p = (v - 0.5) * 2 * r * 100; if (Math.abs(p) < 0.05) return '0.0%'; return `<svg class="i" style="width:10px;height:10px;vertical-align:-1px;margin-right:2px"><use href="#i-${p > 0 ? 'up' : 'down'}"/></svg>${Math.abs(p).toFixed(1)}%`; }
 const H = {
   trimA: v => E.n && E.setG(E.n.trim, dB((v - 0.5) * 24)),
   hiA: () => applyEq('hi'), midA: () => applyEq('mid'), lowA: () => applyEq('low'),
@@ -686,14 +690,14 @@ const H = {
   faderA: v => E.n && E.setG(E.n.fader, v * v),
   xfader: v => E.n && E.setG(E.n.xf, v <= 0.5 ? 1 : Math.cos((v - 0.5) * Math.PI)),
   master: v => E.n && E.setG(E.n.master, Math.pow(v / 0.8, 2)),
-  tempoA: v => { E.ctx && E.setRate(1 + (v - 0.5) * 0.16); $('#aPitch').innerHTML = pitchHTML(v); echoTime(); },
+  tempoA: v => { const r = RNG[RS.A]; E.ctx && E.setRate(1 + (v - 0.5) * 2 * r); $('#aPitch').innerHTML = pitchHTML(v, r); echoTime(); },
   echoMix: v => E.n && E.setG(E.n.eIn, FX.echo ? v : 0, 0.03),
   echoTime: () => echoTime(),
   revMix: v => E.n && E.setG(E.n.rIn, FX.reverb ? v * 0.9 : 0, 0.03),
   revTone: v => E.n && E.n.rTone.frequency.setTargetAtTime(1200 * Math.pow(12, v), E.ctx.currentTime, 0.03),
   flMix: v => E.n && E.setG(E.n.fIn, FX.flanger ? v : 0, 0.03),
   flRate: v => E.n && E.n.lfo.frequency.setTargetAtTime(0.05 + v * v * 2.4, E.ctx.currentTime, 0.05),
-  tempoB: v => { DB.rate = 1 + (v - 0.5) * 0.16; $('#bPitch').innerHTML = pitchHTML(v); }
+  tempoB: v => { const r = RNG[RS.B]; DB.rate = 1 + (v - 0.5) * 2 * r; $('#bPitch').innerHTML = pitchHTML(v, r); }
 };
 function arc(r, a0, a1){
   const p = a => [24 + r * Math.sin(a * Math.PI / 180), 24 - r * Math.cos(a * Math.PI / 180)];
@@ -1080,6 +1084,7 @@ function bindUI(){
     else if (act === 'full'){ const d = document; if (!d.fullscreenElement) (d.documentElement.requestFullscreen || d.documentElement.webkitRequestFullscreen || noop).call(d.documentElement); else (d.exitFullscreen || noop).call(d); }
     else if (act === 'zin' || act === 'zout'){ const p = E.pos(); AR.zoom = clamp(AR.zoom * (act === 'zin' ? 2 : 0.5), 1, 8); const w = CV.arrCv.w; AR.scroll = p * w * AR.zoom / DUR - w * 0.3; }
     else if (act === 'follow'){ AR.follow = !AR.follow; b.classList.toggle('on', AR.follow); }
+    if (b.dataset.rng){ const k = b.dataset.rng; RS[k] = (RS[k] + 1) % RNG.length; b.textContent = '±' + Math.round(RNG[RS[k]] * 100) + '%'; b.classList.toggle('on', RS[k] > 0); H['tempo' + k](CTL['tempo' + k].v); }
     if (b.dataset.cue != null){ E.seek(CUES[+b.dataset.cue].s); flash(b); }
     if (b.dataset.cueb != null){ DB.pos = (+b.dataset.cueb) * 24 % DB.dur; flash(b); }
     if (b.dataset.kill){ const k = b.dataset.kill; KILL[k] = !KILL[k]; b.classList.toggle('on', KILL[k]); applyEq(k); }
@@ -1089,7 +1094,7 @@ function bindUI(){
     if (ab === 'play'){ DB.playing = !DB.playing; UI.syncPlayB(); }
     else if (ab === 'cue'){ DB.playing = false; DB.pos = 0; UI.syncPlayB(); }
     else if (ab === 'loop') b.classList.toggle('on');
-    else if (ab === 'sync'){ b.classList.toggle('on'); if (b.classList.contains('on')){ const target = localBpm(E.pos()) * E.rate; CTL.tempoB.set(clamp(0.5 + (target / DB.bpm - 1) / 0.16, 0, 1)); } }
+    else if (ab === 'sync'){ b.classList.toggle('on'); if (b.classList.contains('on')){ const target = localBpm(E.pos()) * E.rate; CTL.tempoB.set(clamp(0.5 + (target / DB.bpm - 1) / (2 * RNG[RS.B]), 0, 1)); } }
     if (b.parentElement && b.parentElement.classList.contains('seg') && !b.dataset.act){ [...b.parentElement.children].forEach(x => x.classList.toggle('on', x === b)); }
   });
   $('#libBody').addEventListener('dblclick', e => { const tr = e.target.closest('tr'); if (tr) loadB(+tr.dataset.i); });
